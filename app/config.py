@@ -1,14 +1,19 @@
 import os
 from dotenv import load_dotenv
 
-# Cargar .env si estás en local
 load_dotenv()
 
-POSTGRES_USER = os.getenv("POSTGRES_USER")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-POSTGRES_HOST = os.getenv("POSTGRES_HOST")
-POSTGRES_PORT = os.getenv("POSTGRES_PORT")
-POSTGRES_DB = os.getenv("POSTGRES_DB")
+def get_env(key: str, required: bool = True):
+    value = os.getenv(key)
+    if required and not value:
+        raise ValueError(f"Falta la variable de entorno: {key}")
+    return value
+
+POSTGRES_USER = get_env("POSTGRES_USER")
+POSTGRES_PASSWORD = get_env("POSTGRES_PASSWORD")
+POSTGRES_HOST = get_env("POSTGRES_HOST")
+POSTGRES_PORT = get_env("POSTGRES_PORT")
+POSTGRES_DB = get_env("POSTGRES_DB")
 
 DATABASE_URL = (
     f"postgresql+asyncpg://{POSTGRES_USER}:{POSTGRES_PASSWORD}@"
