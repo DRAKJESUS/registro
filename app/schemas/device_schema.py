@@ -1,31 +1,18 @@
-from typing import List, Optional
 from pydantic import BaseModel
+from typing import List, Optional
+from .port_schema import PortCreate, PortOut
 
-class PortBase(BaseModel):
-    number: int
-
-class PortCreate(PortBase):
-    pass
-
-class PortOut(PortBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-class DeviceBase(BaseModel):
+class DeviceCreate(BaseModel):
     ip: str
     type: str
     description: str
     protocol: str
+    ports: List[PortCreate]
     location_id: Optional[int] = None
 
-class DeviceCreate(DeviceBase):
-    ports: List[PortCreate]
-
-class DeviceOut(DeviceBase):
+class DeviceOut(DeviceCreate):
     id: int
     ports: List[PortOut]
 
     class Config:
-        from_attributes = True
+        orm_mode = True
