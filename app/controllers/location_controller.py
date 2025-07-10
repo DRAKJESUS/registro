@@ -1,19 +1,16 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 from ..schemas.location_schema import LocationCreate, LocationOut
 from ..services.location_service import LocationService
-from ..database import SessionLocal
+from ..database import get_session
 
 router = APIRouter(prefix="/locations", tags=["Localizaciones"])
 
-async def get_db():
-    async with SessionLocal() as session:
-        yield session
+@router.post("/", response_model=LocationOut, status_code=status.HTTP_201_CREATED)
+async def create_location(location: LocationCreate, db: AsyncSession = Depends(get_session)):
+    return await LocationService.create(db, location)
 
-@router.post("/", response_model=LocationOut, summary="Crear localización", description="Crea una nueva localización o grupo.")
-async def create_location(loc: LocationCreate, db: AsyncSession = Depends(get_db)):
-    return await LocationService.create(db, loc)
-
-@router.get("/", response_model=list[LocationOut], summary="Listar localizaciones", description="Obtiene una lista de todas las localizaciones registradas.")
-async def list_locations(db: AsyncSession = Depends(get_db)):
+@router.get("/", response_model=List[LocationOut])
+async def list_locations(db: AsyncSession = Depends(get_session)):
     return await LocationService.get_all(db)

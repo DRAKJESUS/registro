@@ -7,5 +7,6 @@ class Location(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True)
+    description = Column(String)
 
     devices = relationship("Device", back_populates="location", cascade="all, delete")

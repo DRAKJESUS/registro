@@ -1,18 +1,12 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..schemas.location_schema import LocationCreate
-from ..models.location_model import Location
-from sqlalchemy.future import select
+from ..repositories.location_repository import LocationRepository
 
 class LocationService:
     @staticmethod
-    async def create(db: AsyncSession, loc: LocationCreate):
-        location = Location(name=loc.name)
-        db.add(location)
-        await db.commit()
-        await db.refresh(location)
-        return location
+    async def create(db: AsyncSession, location: LocationCreate):
+        return await LocationRepository.create(db, location)
 
     @staticmethod
     async def get_all(db: AsyncSession):
-        result = await db.execute(select(Location))
-        return result.scalars().all()
+        return await LocationRepository.get_all(db)

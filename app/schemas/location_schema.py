@@ -2,12 +2,10 @@ from pydantic import BaseModel
 
 class LocationCreate(BaseModel):
     name: str
-
-    class Config:
-        from_attributes = True
+    description: str
 
 class LocationOut(LocationCreate):
     id: int
 
     class Config:
-        from_attributes = True
+        orm_mode = True
