@@ -8,6 +8,6 @@ class Port(Base):
     id = Column(Integer, primary_key=True, index=True)
     port_number = Column(Integer)
     description = Column(String)
-    device_id = Column(Integer, ForeignKey("devices.id"))
 
+    device_id = Column(Integer, ForeignKey("devices.id"))
     device = relationship("Device", back_populates="ports")

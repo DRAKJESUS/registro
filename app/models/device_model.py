@@ -12,5 +12,9 @@ class Device(Base):
     protocol = Column(String)
     location_id = Column(Integer, ForeignKey("locations.id"), nullable=True)
 
-    ports = relationship("Port", back_populates="device", cascade="all, delete-orphan")
-    location = relationship("Location", back_populates="devices", lazy="joined")
+    ports = relationship(
+    "Port",
+    back_populates="device",
+    cascade="all, delete-orphan",
+    lazy="selectin"  # Esto es clave para evitar el MissingGreenlet
+)

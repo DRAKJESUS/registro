@@ -1,8 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
+
 from ..models.device_model import Device
 from ..models.port_model import Port
 from ..schemas.device_schema import DeviceCreate
-from sqlalchemy.future import select
 
 class DeviceRepository:
     @staticmethod
@@ -31,5 +33,7 @@ class DeviceRepository:
 
     @staticmethod
     async def get_all(db: AsyncSession):
-        result = await db.execute(select(Device))
+        result = await db.execute(
+            select(Device).options(selectinload(Device.ports))
+        )
         return result.scalars().all()
