@@ -1,32 +1,32 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
+
 
 class PortBase(BaseModel):
-    port_number: int
-    protocol: str  # ✅ Agregado
+    number: int
 
 class PortCreate(PortBase):
     pass
 
-class PortResponse(PortBase):
+class PortOut(PortBase):
     id: int
-    device_id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # Para Pydantic v2
 
-class DeviceCreate(BaseModel):
+class DeviceBase(BaseModel):
     ip: str
     type: str
-    description: str
+    description: Optional[str]
+    protocol: str  # Nuevo campo obligatorio
+
+class DeviceCreate(DeviceBase):
     ports: List[PortCreate]
 
-class DeviceResponse(BaseModel):
+class DeviceOut(DeviceBase):
     id: int
-    ip: str
-    type: str
-    description: str
-    ports: List[PortResponse]
+    ports: List[PortOut]
+    location_id: Optional[int]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
