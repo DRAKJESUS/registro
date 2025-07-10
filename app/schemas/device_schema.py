@@ -1,21 +1,32 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import List
 
-class PortSchema(BaseModel):
-    number: int = Field(..., description="Número de puerto asociado al dispositivo")
+class PortBase(BaseModel):
+    port_number: int
+    protocol: str  # ✅ Agregado
+
+class PortCreate(PortBase):
+    pass
+
+class PortResponse(PortBase):
+    id: int
+    device_id: int
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 class DeviceCreate(BaseModel):
-    ip: str = Field(..., description="Dirección IP del dispositivo")
-    type: str = Field(..., description="Tipo de dispositivo (ej. Cámara, Sensor, etc.)")
-    description: str = Field(..., description="Descripción breve del dispositivo")
-    ports: List[PortSchema] = Field(..., description="Lista de puertos asociados")
+    ip: str
+    type: str
+    description: str
+    ports: List[PortCreate]
 
-class DeviceOut(DeviceCreate):
+class DeviceResponse(BaseModel):
     id: int
-    ports: List[PortSchema]
+    ip: str
+    type: str
+    description: str
+    ports: List[PortResponse]
 
     class Config:
-        from_attributes = True
+        orm_mode = True

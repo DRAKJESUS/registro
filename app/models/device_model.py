@@ -6,18 +6,19 @@ class Device(Base):
     __tablename__ = "devices"
 
     id = Column(Integer, primary_key=True, index=True)
-    ip = Column(String, unique=True, nullable=False)
-    type = Column(String, nullable=False)
+    ip = Column(String, unique=True, index=True)
+    type = Column(String)
     description = Column(String)
 
-    ports = relationship("Port", back_populates="device", cascade="all, delete", lazy="selectin")
+    ports = relationship("Port", back_populates="device", cascade="all, delete-orphan")
 
 
 class Port(Base):
     __tablename__ = "ports"
 
     id = Column(Integer, primary_key=True, index=True)
-    number = Column(Integer, nullable=False)
+    port_number = Column(Integer)
+    protocol = Column(String)  # ✅ Nuevo campo
     device_id = Column(Integer, ForeignKey("devices.id"))
 
     device = relationship("Device", back_populates="ports")
