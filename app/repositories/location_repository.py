@@ -6,7 +6,10 @@ from ..schemas.location_schema import LocationCreate
 class LocationRepository:
     @staticmethod
     async def create(db: AsyncSession, location_data: LocationCreate):
-        location = Location(name=location_data.name, description=location_data.description)
+        location = Location(
+            name=location_data.name,
+            description=location_data.description
+        )
         db.add(location)
         await db.commit()
         await db.refresh(location)
