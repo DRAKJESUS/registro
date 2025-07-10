@@ -33,6 +33,7 @@ async def startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
+
 app.include_router(device_controller.router)
 app.include_router(location_controller.router)
 app.include_router(assignment_controller.router)
