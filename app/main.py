@@ -8,6 +8,7 @@ from .exceptions import (
 )
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="API de Inventario de Dispositivos",
@@ -16,6 +17,15 @@ Sistema para gestionar dispositivos de red, asignarlos a localizaciones (grupos)
 y llevar un historial completo de cambios y asignaciones.
 """,
     version="1.0.0"
+)
+
+# 🔥 CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Puedes reemplazar con tu dominio frontend
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.on_event("startup")
