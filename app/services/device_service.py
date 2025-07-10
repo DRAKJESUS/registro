@@ -1,4 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
+
 from ..schemas.device_schema import DeviceCreate
 from ..repositories.device_repository import DeviceRepository
 from ..models.assignment_model import AssignmentHistory
@@ -13,7 +16,11 @@ class DeviceService:
 
     @staticmethod
     async def get_devices(db: AsyncSession):
-        return await DeviceRepository.get_all(db)
+        result = await db.execute(
+            select(Device)
+            .options(selectinload(Device.ports), selectinload(Device.location))
+        )
+        return result.scalars().all()
 
     @staticmethod
     async def delete(db: AsyncSession, device_id: int):

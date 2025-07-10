@@ -1,33 +1,44 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+
 from ..models.device_model import Device
-from ..models.port_model import Port
 from ..schemas.device_schema import DeviceCreate
+from ..models.port_model import Port
+
 
 class DeviceRepository:
-
     @staticmethod
-    async def create(db: AsyncSession, device: DeviceCreate):
-        new_device = Device(
-            ip=device.ip,
-            type=device.type,
-            description=device.description,
-            protocol=device.protocol
+    async def create(db: AsyncSession, device_data: DeviceCreate):
+        device = Device(
+            ip=device_data.ip,
+            type=device_data.type,
+            description=device_data.description,
+            protocol=device_data.protocol,
+            location_id=device_data.location_id
         )
-        db.add(new_device)
-        await db.flush()  # Para obtener new_device.id sin commit aún
+        db.add(device)
+        await db.flush()  # Obtener el ID antes de agregar puertos
 
-        for port in device.ports:
-            db.add(Port(number=port.number, device_id=new_device.id))
+        # Añadir puertos si los hay
+        for port in device_data.ports:
+            db.add(Port(
+                number=port.number,
+                description=port.description,
+                device_id=device.id
+            ))
 
         await db.commit()
-        await db.refresh(new_device)
-        return new_device
+        await db.refresh(device)
+        return device
 
     @staticmethod
     async def get_all(db: AsyncSession):
         result = await db.execute(
-            select(Device).options(selectinload(Device.ports))
+            select(Device)
+            .options(
+                selectinload(Device.ports),
+                selectinload(Device.location)
+            )
         )
         return result.scalars().all()
