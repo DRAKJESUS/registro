@@ -1,6 +1,5 @@
-from pydantic import BaseModel
 from typing import List, Optional
-
+from pydantic import BaseModel
 
 class PortBase(BaseModel):
     number: int
@@ -12,13 +11,14 @@ class PortOut(PortBase):
     id: int
 
     class Config:
-        from_attributes = True  # Para Pydantic v2
+        from_attributes = True
 
 class DeviceBase(BaseModel):
     ip: str
     type: str
-    description: Optional[str]
-    protocol: str  # Nuevo campo obligatorio
+    description: str
+    protocol: str
+    location_id: Optional[int] = None
 
 class DeviceCreate(DeviceBase):
     ports: List[PortCreate]
@@ -26,7 +26,6 @@ class DeviceCreate(DeviceBase):
 class DeviceOut(DeviceBase):
     id: int
     ports: List[PortOut]
-    location_id: Optional[int]
 
     class Config:
         from_attributes = True

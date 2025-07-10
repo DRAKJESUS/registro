@@ -1,31 +1,43 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
 from ..schemas.device_schema import DeviceCreate, DeviceOut
 from ..services.device_service import DeviceService
-from ..database import SessionLocal
+from ..database import get_session
 
 router = APIRouter(prefix="/devices", tags=["Dispositivos"])
 
-async def get_db():
-    async with SessionLocal() as session:
-        yield session
-
-@router.post("/", response_model=DeviceOut, summary="Registrar dispositivo", description="Crea un nuevo dispositivo con sus puertos asociados.")
-async def create_device(device: DeviceCreate, db: AsyncSession = Depends(get_db)):
+@router.post("/", response_model=DeviceOut, status_code=status.HTTP_201_CREATED)
+async def create_device(device: DeviceCreate, db: AsyncSession = Depends(get_session)):
+    """
+    Crea un nuevo dispositivo con IP, tipo, descripción, protocolo, puertos y localización (opcional).
+    """
     return await DeviceService.create_device(db, device)
 
-@router.get("/", response_model=list[DeviceOut], summary="Listar dispositivos", description="Obtiene una lista de todos los dispositivos registrados.")
-async def get_devices(db: AsyncSession = Depends(get_db)):
+@router.get("/", response_model=List[DeviceOut])
+async def list_devices(db: AsyncSession = Depends(get_session)):
+    """
+    Lista todos los dispositivos registrados con sus puertos y localización.
+    """
     return await DeviceService.get_devices(db)
 
-@router.delete("/{device_id}", summary="Eliminar dispositivo", description="Elimina un dispositivo por su ID.")
-async def delete_device(device_id: int, db: AsyncSession = Depends(get_db)):
+@router.delete("/{device_id}")
+async def delete_device(device_id: int, db: AsyncSession = Depends(get_session)):
+    """
+    Elimina un dispositivo por su ID.
+    """
     return await DeviceService.delete(db, device_id)
 
-@router.put("/{device_id}/assign/{location_id}", summary="Asignar dispositivo", description="Asigna un dispositivo a una localización específica.")
-async def assign_device(device_id: int, location_id: int, db: AsyncSession = Depends(get_db)):
+@router.post("/{device_id}/assign/{location_id}")
+async def assign_device(device_id: int, location_id: int, db: AsyncSession = Depends(get_session)):
+    """
+    Asigna un dispositivo a una localización.
+    """
     return await DeviceService.assign_location(db, device_id, location_id)
 
-@router.put("/{device_id}/change-location/{location_id}", summary="Cambiar localización", description="Cambia la localización asignada a un dispositivo.")
-async def change_device_location(device_id: int, location_id: int, db: AsyncSession = Depends(get_db)):
+@router.post("/{device_id}/change/{location_id}")
+async def change_device_location(device_id: int, location_id: int, db: AsyncSession = Depends(get_session)):
+    """
+    Cambia la localización de un dispositivo.
+    """
     return await DeviceService.change_location(db, device_id, location_id)
