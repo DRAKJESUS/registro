@@ -13,8 +13,14 @@ class Device(Base):
     location_id = Column(Integer, ForeignKey("locations.id"), nullable=True)
 
     ports = relationship(
-    "Port",
-    back_populates="device",
-    cascade="all, delete-orphan",
-    lazy="selectin"  # Esto es clave para evitar el MissingGreenlet
-)
+        "Port",
+        back_populates="device",
+        cascade="all, delete-orphan",
+        lazy="selectin"  # Esto previene errores async con SQLAlchemy
+    )
+
+    location = relationship(
+        "Location",
+        back_populates="devices",
+        lazy="joined"  # carga inmediata para evitar errores de sesión
+    )
