@@ -1,5 +1,10 @@
 from fastapi import FastAPI, Request
-from .controllers import device_controller, location_controller, assignment_controller
+from .controllers import (
+    device_controller,
+    location_controller,
+    assignment_controller,
+    history_controller  #
+)
 from .database import engine, Base
 from .exceptions import (
     validation_exception_handler,
@@ -19,10 +24,10 @@ y llevar un historial completo de cambios y asignaciones.
     version="1.0.0"
 )
 
-# 🔥 CORS
+#  CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Puedes reemplazar con tu dominio frontend
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,15 +36,16 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup():
     async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)  # ⚠️ Elimina todo
+        await conn.run_sync(Base.metadata.drop_all)  #  Elimina todo
         await conn.run_sync(Base.metadata.create_all)
 
-
+#  Rutas
 app.include_router(device_controller.router)
 app.include_router(location_controller.router)
 app.include_router(assignment_controller.router)
+app.include_router(history_controller.router) 
 
-# Registrar manejadores de errores
+# Manejo de errores
 app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
 app.add_exception_handler(IntegrityError, integrity_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)

@@ -1,13 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
-
 from ..schemas.device_schema import DeviceCreate
 from ..repositories.device_repository import DeviceRepository
 from ..models.assignment_model import AssignmentHistory
 from ..models.device_model import Device
 from ..models.location_model import Location
-
 
 class DeviceService:
     @staticmethod
@@ -16,11 +12,7 @@ class DeviceService:
 
     @staticmethod
     async def get_devices(db: AsyncSession):
-        result = await db.execute(
-            select(Device)
-            .options(selectinload(Device.ports), selectinload(Device.location))
-        )
-        return result.scalars().all()
+        return await DeviceRepository.get_all(db)
 
     @staticmethod
     async def delete(db: AsyncSession, device_id: int):
@@ -36,8 +28,17 @@ class DeviceService:
         device = await db.get(Device, device_id)
         if not device:
             return {"error": "Dispositivo no encontrado"}
+        old = getattr(device, 'location_id', None)
         device.location_id = location_id
-        db.add(AssignmentHistory(device_id=device_id, new_location_id=location_id, action="ASIGNADO"))
+
+        history = AssignmentHistory(
+            device_id=device.id,
+            action="ASIGNACIÓN",
+            old_location_id=old,
+            new_location_id=location_id
+        )
+        db.add(history)
+        db.add(device)
         await db.commit()
         return {"mensaje": "Dispositivo asignado a localización"}
 
@@ -48,37 +49,33 @@ class DeviceService:
             return {"error": "Dispositivo no encontrado"}
         old = getattr(device, 'location_id', None)
         device.location_id = location_id
-        db.add(AssignmentHistory(device_id=device_id, old_location_id=old, new_location_id=location_id, action="CAMBIO"))
+
+        history = AssignmentHistory(
+            device_id=device.id,
+            action="CAMBIO DE LOCALIZACIÓN",
+            old_location_id=old,
+            new_location_id=location_id
+        )
+        db.add(history)
+        db.add(device)
         await db.commit()
         return {"mensaje": "Localización cambiada"}
 
     @staticmethod
-    async def update_status(db: AsyncSession, device_id: int, status: str):
+    async def change_status(db: AsyncSession, device_id: int, status: str):
         device = await db.get(Device, device_id)
         if not device:
             return {"error": "Dispositivo no encontrado"}
-
+        old = getattr(device, 'status', None)
         device.status = status
+
+        history = AssignmentHistory(
+            device_id=device.id,
+            action="CAMBIO DE ESTATUS",
+            old_status=old,
+            new_status=status
+        )
+        db.add(history)
         db.add(device)
         await db.commit()
-        return {"mensaje": f"Status actualizado a '{status}'"}
-
-@staticmethod
-async def update_status(db: AsyncSession, device_id: int, status: str):
-    device = await db.get(Device, device_id)
-    if not device:
-        return {"error": "Dispositivo no encontrado"}
-
-    old_status = getattr(device, 'status', None)
-    device.status = status
-    db.add(device)
-
-    db.add(AssignmentHistory(
-        device_id=device_id,
-        old_status=old_status,
-        new_status=status,
-        action="CAMBIO_STATUS"
-    ))
-
-    await db.commit()
-    return {"mensaje": f"Status actualizado de '{old_status}' a '{status}'"}
+        return {"mensaje": f"Estatus actualizado a {status}"}
