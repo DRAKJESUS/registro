@@ -51,3 +51,34 @@ class DeviceService:
         db.add(AssignmentHistory(device_id=device_id, old_location_id=old, new_location_id=location_id, action="CAMBIO"))
         await db.commit()
         return {"mensaje": "Localización cambiada"}
+
+    @staticmethod
+    async def update_status(db: AsyncSession, device_id: int, status: str):
+        device = await db.get(Device, device_id)
+        if not device:
+            return {"error": "Dispositivo no encontrado"}
+
+        device.status = status
+        db.add(device)
+        await db.commit()
+        return {"mensaje": f"Status actualizado a '{status}'"}
+
+@staticmethod
+async def update_status(db: AsyncSession, device_id: int, status: str):
+    device = await db.get(Device, device_id)
+    if not device:
+        return {"error": "Dispositivo no encontrado"}
+
+    old_status = getattr(device, 'status', None)
+    device.status = status
+    db.add(device)
+
+    db.add(AssignmentHistory(
+        device_id=device_id,
+        old_status=old_status,
+        new_status=status,
+        action="CAMBIO_STATUS"
+    ))
+
+    await db.commit()
+    return {"mensaje": f"Status actualizado de '{old_status}' a '{status}'"}

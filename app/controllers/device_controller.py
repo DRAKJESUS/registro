@@ -41,3 +41,10 @@ async def change_device_location(device_id: int, location_id: int, db: AsyncSess
     Cambia la localización de un dispositivo.
     """
     return await DeviceService.change_location(db, device_id, location_id)
+
+@router.put("/{device_id}/status")
+async def update_device_status(device_id: int, status: str, db: AsyncSession = Depends(get_session)):
+    """
+    Cambia el status del dispositivo y guarda el cambio en historial.
+    """
+    return await DeviceService.update_status(db, device_id, status)
