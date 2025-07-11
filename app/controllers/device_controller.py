@@ -47,4 +47,4 @@ async def update_device_status(device_id: int, status: str, db: AsyncSession = D
     """
     Cambia el status del dispositivo y guarda el cambio en historial.
     """
-    return await DeviceService.update_status(db, device_id, status)
+    return await DeviceService.change_status(db, device_id, status)
