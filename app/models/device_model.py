@@ -7,7 +7,7 @@ class Device(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     ip = Column(String, unique=True, index=True)
-    type = Column(String)
+    status = Column(String)  # CAMBIO: antes era 'type'
     description = Column(String)
     protocol = Column(String)
     location_id = Column(Integer, ForeignKey("locations.id"), nullable=True)
@@ -16,11 +16,6 @@ class Device(Base):
         "Port",
         back_populates="device",
         cascade="all, delete-orphan",
-        lazy="selectin"  # Esto previene errores async con SQLAlchemy
+        lazy="selectin"
     )
-
-    location = relationship(
-        "Location",
-        back_populates="devices",
-        lazy="joined"  # carga inmediata para evitar errores de sesión
-    )
+    location = relationship("Location", back_populates="devices", lazy="joined")
