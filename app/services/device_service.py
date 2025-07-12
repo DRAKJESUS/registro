@@ -4,7 +4,6 @@ from ..repositories.device_repository import DeviceRepository
 from ..repositories.port_repository import PortRepository
 from ..models.assignment_model import AssignmentHistory
 from ..models.device_model import Device
-from ..models.location_model import Location
 
 class DeviceService:
     @staticmethod
@@ -29,7 +28,7 @@ class DeviceService:
         device = await db.get(Device, device_id)
         if not device:
             return {"error": "Dispositivo no encontrado"}
-        old = getattr(device, 'location_id', None)
+        old = device.location_id
         device.location_id = location_id
 
         history = AssignmentHistory(
@@ -48,7 +47,7 @@ class DeviceService:
         device = await db.get(Device, device_id)
         if not device:
             return {"error": "Dispositivo no encontrado"}
-        old = getattr(device, 'location_id', None)
+        old = device.location_id
         device.location_id = location_id
 
         history = AssignmentHistory(
@@ -67,7 +66,7 @@ class DeviceService:
         device = await db.get(Device, device_id)
         if not device:
             return {"error": "Dispositivo no encontrado"}
-        old = getattr(device, 'status', None)
+        old = device.status
         device.status = status
 
         history = AssignmentHistory(
@@ -87,11 +86,9 @@ class DeviceService:
         if not device:
             return {"error": "Dispositivo no encontrado"}
 
-        # Guardar valores anteriores para historial
         old_location = device.location_id
         old_status = device.status
 
-        # Actualización de campos si vienen en la petición
         if device_data.ip is not None:
             device.ip = device_data.ip
         if device_data.status is not None:
@@ -103,11 +100,9 @@ class DeviceService:
         if device_data.location_id is not None:
             device.location_id = device_data.location_id
 
-        # Reemplazo de puertos si se envían
         if device_data.ports is not None:
             await PortRepository.replace_ports(db, device.id, device_data.ports)
 
-        # Si cambió status o localización, registrar historial
         if (device_data.status and device_data.status != old_status) or \
            (device_data.location_id and device_data.location_id != old_location):
             history = AssignmentHistory(
@@ -124,4 +119,3 @@ class DeviceService:
         await db.commit()
         await db.refresh(device)
         return device
-# No hagas commit aquí si ya haces commit desde el Service
