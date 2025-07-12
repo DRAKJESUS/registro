@@ -1,5 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from ..schemas.device_schema import DeviceCreate
+from ..schemas.device_schema import DeviceUpdate
 from ..repositories.device_repository import DeviceRepository
 from ..models.assignment_model import AssignmentHistory
 from ..models.device_model import Device
