@@ -19,4 +19,4 @@ class PortRepository:
             )
             db.add(port)
 
-        await db.commit()
+        # No hagas commit aquí, se hace en DeviceService
