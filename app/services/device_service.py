@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from ..schemas.device_schema import DeviceCreate
-from ..schemas.device_schema import DeviceUpdate
+from ..schemas.device_schema import DeviceCreate, DeviceUpdate
 from ..repositories.device_repository import DeviceRepository
+from ..repositories.port_repository import PortRepository
 from ..models.assignment_model import AssignmentHistory
 from ..models.device_model import Device
 from ..models.location_model import Location
@@ -81,89 +81,46 @@ class DeviceService:
         await db.commit()
         return {"mensaje": f"Estatus actualizado a {status}"}
 
-@staticmethod
-async def update_device(db: AsyncSession, device_id: int, device_data: DeviceUpdate):
-    device = await db.get(Device, device_id)
-    if not device:
-        return {"error": "Dispositivo no encontrado"}
+    @staticmethod
+    async def update_device(db: AsyncSession, device_id: int, device_data: DeviceUpdate):
+        device = await db.get(Device, device_id)
+        if not device:
+            return {"error": "Dispositivo no encontrado"}
 
-    # Campos previos para historial
-    old_location = device.location_id
-    old_status = device.status
+        # Guardar valores anteriores para historial
+        old_location = device.location_id
+        old_status = device.status
 
-    # Actualización de campos
-    if device_data.ip:
-        device.ip = device_data.ip
-    if device_data.description:
-        device.description = device_data.description
-    if device_data.protocol:
-        device.protocol = device_data.protocol
-    if device_data.status:
-        device.status = device_data.status
-    if device_data.location_id:
-        device.location_id = device_data.location_id
+        # Actualización de campos si vienen en la petición
+        if device_data.ip is not None:
+            device.ip = device_data.ip
+        if device_data.status is not None:
+            device.status = device_data.status
+        if device_data.description is not None:
+            device.description = device_data.description
+        if device_data.protocol is not None:
+            device.protocol = device_data.protocol
+        if device_data.location_id is not None:
+            device.location_id = device_data.location_id
 
-    # Actualiza puertos si vienen en la petición
-    if device_data.ports is not None:
-        from ..models.port_model import Port
-        await db.execute(Port.__table__.delete().where(Port.device_id == device.id))
-        for port in device_data.ports:
-            new_port = Port(
-                port_number=port.port_number,
-                description=port.description,
-                device_id=device.id
+        # Reemplazo de puertos si se envían
+        if device_data.ports is not None:
+            await PortRepository.replace_ports(db, device.id, device_data.ports)
+
+        # Si cambió status o localización, registrar historial
+        if (device_data.status and device_data.status != old_status) or \
+           (device_data.location_id and device_data.location_id != old_location):
+            history = AssignmentHistory(
+                device_id=device.id,
+                action="ACTUALIZACIÓN DE DISPOSITIVO",
+                old_location_id=old_location,
+                new_location_id=device.location_id,
+                old_status=old_status,
+                new_status=device.status
             )
-            db.add(new_port)
+            db.add(history)
 
-    # Guarda cambios y registra historial si hubo cambios relevantes
-    if (device_data.status and device_data.status != old_status) or \
-       (device_data.location_id and device_data.location_id != old_location):
-        from ..models.assignment_model import AssignmentHistory
-        history = AssignmentHistory(
-            device_id=device.id,
-            action="ACTUALIZACIÓN DE DISPOSITIVO",
-            old_location_id=old_location,
-            new_location_id=device.location_id,
-            old_status=old_status,
-            new_status=device.status
-        )
-        db.add(history)
-
-    db.add(device)
-    await db.commit()
-    await db.refresh(device)
-    return device
-
-@staticmethod
-async def update_device(db: AsyncSession, device_id: int, device_data: DeviceUpdate):
-    device = await db.get(Device, device_id)
-    if not device:
-        return {"error": "Dispositivo no encontrado"}
-
-    if device_data.ip is not None:
-        device.ip = device_data.ip
-    if device_data.status is not None:
-        device.status = device_data.status
-    if device_data.description is not None:
-        device.description = device_data.description
-    if device_data.protocol is not None:
-        device.protocol = device_data.protocol
-    if device_data.location_id is not None:
-        device.location_id = device_data.location_id
-
-    if device_data.ports is not None:
-        from ..models.port_model import Port
-        await db.execute(
-            Port.__table__.delete().where(Port.device_id == device.id)
-        )
-        for port in device_data.ports:
-            new_port = Port(
-                port_number=port.port_number,
-                description=port.description,
-                device_id=device.id
-            )
-            db.add(new_port)
-
-    await db.commit()
-    await db.refresh(device)
-    return device
+        db.add(device)
+        await db.commit()
+        await db.refresh(device)
+        return device
