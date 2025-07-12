@@ -24,3 +24,14 @@ class DeviceOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+class DeviceUpdate(BaseModel):
+    ip: Optional[str]
+    status: Optional[str]
+    description: Optional[str]
+    protocol: Optional[str]
+    location_id: Optional[int]
+    ports: Optional[List[PortCreate]]
+
+    class Config:
+        from_attributes = True

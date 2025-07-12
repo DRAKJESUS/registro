@@ -1,11 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class LocationCreate(BaseModel):
-    name: str
-    description: str
+    name: str = Field(..., example="Oficina Principal")
+    description: str = Field(None, example="Oficinas administrativas del segundo piso")
 
 class LocationOut(LocationCreate):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True  # Pydantic v2
