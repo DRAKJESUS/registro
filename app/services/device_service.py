@@ -124,3 +124,4 @@ class DeviceService:
         await db.commit()
         await db.refresh(device)
         return device
+# No hagas commit aquí si ya haces commit desde el Service

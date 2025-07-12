@@ -9,6 +9,7 @@ class PortRepository:
     async def replace_ports(db: AsyncSession, device_id: int, new_ports: List[PortCreate]):
         # Elimina todos los puertos existentes para el dispositivo
         await db.execute(delete(Port).where(Port.device_id == device_id))
+        await db.flush()  # 👈 Esto es crucial para evitar el error 500
 
         # Inserta los nuevos puertos
         for port_data in new_ports:
@@ -19,4 +20,4 @@ class PortRepository:
             )
             db.add(port)
 
-        # No hagas commit aquí, se hace en DeviceService
+        # No commit aquí, lo hace DeviceService
