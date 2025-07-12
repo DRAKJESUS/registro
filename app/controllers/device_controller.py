@@ -4,6 +4,7 @@ from typing import List
 from ..schemas.device_schema import DeviceCreate, DeviceOut
 from ..services.device_service import DeviceService
 from ..database import get_session
+from ..schemas.device_schema import DeviceUpdate
 
 router = APIRouter(prefix="/devices", tags=["Dispositivos"])
 
@@ -48,3 +49,10 @@ async def update_device_status(device_id: int, status: str, db: AsyncSession = D
     Cambia el status del dispositivo y guarda el cambio en historial.
     """
     return await DeviceService.change_status(db, device_id, status)
+
+@router.put("/{device_id}", response_model=DeviceOut)
+async def update_device(device_id: int, device: DeviceUpdate, db: AsyncSession = Depends(get_session)):
+    """
+    Actualiza todos los datos de un dispositivo, incluyendo IP, status, protocolo, descripción, localización y puertos.
+    """
+    return await DeviceService.update_device(db, device_id, device)

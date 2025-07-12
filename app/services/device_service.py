@@ -133,3 +133,37 @@ async def update_device(db: AsyncSession, device_id: int, device_data: DeviceUpd
     await db.commit()
     await db.refresh(device)
     return device
+
+@staticmethod
+async def update_device(db: AsyncSession, device_id: int, device_data: DeviceUpdate):
+    device = await db.get(Device, device_id)
+    if not device:
+        return {"error": "Dispositivo no encontrado"}
+
+    if device_data.ip is not None:
+        device.ip = device_data.ip
+    if device_data.status is not None:
+        device.status = device_data.status
+    if device_data.description is not None:
+        device.description = device_data.description
+    if device_data.protocol is not None:
+        device.protocol = device_data.protocol
+    if device_data.location_id is not None:
+        device.location_id = device_data.location_id
+
+    if device_data.ports is not None:
+        from ..models.port_model import Port
+        await db.execute(
+            Port.__table__.delete().where(Port.device_id == device.id)
+        )
+        for port in device_data.ports:
+            new_port = Port(
+                port_number=port.port_number,
+                description=port.description,
+                device_id=device.id
+            )
+            db.add(new_port)
+
+    await db.commit()
+    await db.refresh(device)
+    return device
