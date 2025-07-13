@@ -89,6 +89,7 @@ class DeviceService:
         old_location = device.location_id
         old_status = device.status
 
+        # Actualización de campos si vienen en la petición
         if device_data.ip is not None:
             device.ip = device_data.ip
         if device_data.status is not None:
@@ -100,9 +101,11 @@ class DeviceService:
         if device_data.location_id is not None:
             device.location_id = device_data.location_id
 
+        # 🚨 IMPORTANTE: reemplazar puertos SOLO después del commit del delete
         if device_data.ports is not None:
             await PortRepository.replace_ports(db, device.id, device_data.ports)
 
+        # Si cambió status o localización, registrar historial
         if (device_data.status and device_data.status != old_status) or \
            (device_data.location_id and device_data.location_id != old_location):
             history = AssignmentHistory(

@@ -7,17 +7,17 @@ from ..schemas.port_schema import PortCreate
 class PortRepository:
     @staticmethod
     async def replace_ports(db: AsyncSession, device_id: int, new_ports: List[PortCreate]):
-        # Elimina los puertos existentes del dispositivo
+        # Elimina todos los puertos existentes
         await db.execute(delete(Port).where(Port.device_id == device_id))
-        await db.commit()  # <- IMPORTANTE: confirmamos antes de añadir nuevos
+        await db.commit()  # Muy importante para evitar conflictos
 
-        # Inserta nuevos puertos
+        # Inserta los nuevos puertos
         for port_data in new_ports:
-            port = Port(
+            new_port = Port(
                 device_id=device_id,
                 port_number=port_data.port_number,
                 description=port_data.description
             )
-            db.add(port)
+            db.add(new_port)
 
-        await db.commit()  # <- Segundo commit para guardar los nuevos
+        await db.commit()
