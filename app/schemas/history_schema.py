@@ -13,4 +13,4 @@ class AssignmentHistoryOut(BaseModel):
     timestamp: datetime
 
     class Config:
-        from_attributes = True  # o orm_mode = True si usas Pydantic v1
+        from_attributes = True  # Para Pydantic v2 (antes orm_mode = True)
