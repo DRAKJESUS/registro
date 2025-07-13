@@ -128,3 +128,97 @@ class DeviceService:
             await db.rollback()
             logger.error(f"Error inesperado al actualizar dispositivo {device_id}: {e}")
             raise
+
+    @staticmethod
+    async def change_status(db: AsyncSession, device_id: int, new_status: str):
+        try:
+            device = await db.get(Device, device_id)
+            if not device:
+                raise ValueError("Dispositivo no encontrado")
+
+            old_status = device.status
+            if old_status == new_status:
+                return {"mensaje": f"El dispositivo ya tiene el estado '{new_status}'"}
+
+            device.status = new_status
+
+            # Guardar en historial
+            history = AssignmentHistory(
+                device_id=device.id,
+                action="CAMBIO DE STATUS",
+                old_status=old_status,
+                new_status=new_status,
+                old_location_id=device.location_id,
+                new_location_id=device.location_id
+            )
+            db.add(history)
+            await db.commit()
+            await db.refresh(device)
+            return device
+
+        except Exception as e:
+            await db.rollback()
+            logger.error(f"Error al cambiar status del dispositivo {device_id}: {e}")
+            raise
+
+    @staticmethod
+    async def assign_location(db: AsyncSession, device_id: int, location_id: int):
+        try:
+            device = await db.get(Device, device_id)
+            if not device:
+                raise ValueError("Dispositivo no encontrado")
+
+            if device.location_id == location_id:
+                return {"mensaje": f"El dispositivo ya está en la localización {location_id}"}
+
+            history = AssignmentHistory(
+                device_id=device.id,
+                action="ASIGNACIÓN DE LOCALIZACIÓN",
+                old_location_id=device.location_id,
+                new_location_id=location_id,
+                old_status=device.status,
+                new_status=device.status
+            )
+
+            device.location_id = location_id
+            db.add(device)
+            db.add(history)
+            await db.commit()
+            await db.refresh(device)
+            return device
+
+        except Exception as e:
+            await db.rollback()
+            logger.error(f"Error al asignar localización al dispositivo {device_id}: {e}")
+            raise
+
+    @staticmethod
+    async def change_location(db: AsyncSession, device_id: int, location_id: int):
+        try:
+            device = await db.get(Device, device_id)
+            if not device:
+                raise ValueError("Dispositivo no encontrado")
+
+            if device.location_id == location_id:
+                return {"mensaje": f"El dispositivo ya está en la localización {location_id}"}
+
+            history = AssignmentHistory(
+                device_id=device.id,
+                action="CAMBIO DE LOCALIZACIÓN",
+                old_location_id=device.location_id,
+                new_location_id=location_id,
+                old_status=device.status,
+                new_status=device.status
+            )
+
+            device.location_id = location_id
+            db.add(device)
+            db.add(history)
+            await db.commit()
+            await db.refresh(device)
+            return device
+
+        except Exception as e:
+            await db.rollback()
+            logger.error(f"Error al cambiar localización del dispositivo {device_id}: {e}")
+            raise
