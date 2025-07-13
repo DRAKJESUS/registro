@@ -9,7 +9,7 @@ class DeviceCreate(BaseModel):
     description: str
     protocol: str
     location_id: Optional[int]
-    ports: List[PortCreate]  # ⬅️ CORREGIDO
+    ports: List[PortCreate]  # ✅ Importante: usar PortCreate, NO PortOut
 
     class Config:
         from_attributes = True
@@ -20,7 +20,7 @@ class DeviceUpdate(BaseModel):
     description: Optional[str] = None
     protocol: Optional[str] = None
     location_id: Optional[int] = None
-    ports: Optional[List[PortCreate]] = None  # ⬅️ CORREGIDO
+    ports: Optional[List[PortCreate]] = None  # ✅ También usar PortCreate aquí
 
     class Config:
         from_attributes = True
@@ -32,7 +32,7 @@ class DeviceOut(BaseModel):
     description: str
     protocol: str
     location: Optional[LocationOut]
-    ports: List[PortOut]
+    ports: List[PortOut]  # ✅ Mostrar los puertos con ID
 
     class Config:
         from_attributes = True

@@ -5,10 +5,11 @@ class PortCreate(BaseModel):
     description: str
 
     class Config:
-        extra = Extra.forbid
+        extra = Extra.forbid  # Evita campos no definidos
+        from_attributes = True
 
 class PortOut(PortCreate):
     id: int
 
     class Config:
-        from_attributes = True  # para Pydantic v2
+        from_attributes = True
