@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from ..models.location_model import Location
 from ..schemas.location_schema import LocationCreate
+from ..models.assignment_model import AssignmentHistory  # Para guardar historial
 
 class LocationService:
     @staticmethod
@@ -32,19 +33,42 @@ class LocationService:
 
     @staticmethod
     async def update(db: AsyncSession, location_id: int, location: LocationCreate):
+        """
+        Actualiza nombre y descripción de una localización.
+        Guarda en historial si hay cambios.
+        """
         location_obj = await db.get(Location, location_id)
         if not location_obj:
             return None
 
-        # Verifica si ya existe otra localización con ese nombre (distinto ID)
+        # Verifica duplicado
         existing = await db.execute(
             select(Location).where(Location.name == location.name, Location.id != location_id)
         )
         if existing.scalar():
             raise ValueError("Ya existe otra localización con ese nombre")
 
+        cambios = []
+        if location_obj.name != location.name:
+            cambios.append("nombre")
+        if location_obj.description != location.description:
+            cambios.append("descripción")
+
         location_obj.name = location.name
         location_obj.description = location.description
+        db.add(location_obj)
+
+        if cambios:
+            history = AssignmentHistory(
+                device_id=0,  # Si no hay dispositivo relacionado, puedes usar None si lo permites
+                action=f"EDICIÓN DE LOCALIZACIÓN ({', '.join(cambios).upper()})",
+                old_status=None,
+                new_status=None,
+                old_location_id=location_id,
+                new_location_id=location_id
+            )
+            db.add(history)
+
         await db.commit()
         await db.refresh(location_obj)
         return location_obj
