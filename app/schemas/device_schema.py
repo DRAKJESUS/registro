@@ -4,7 +4,7 @@ from .port_schema import PortCreate, PortOut
 
 class DeviceCreate(BaseModel):
     ip: str
-    status: str  # CAMBIO
+    status: str
     description: str
     protocol: str
     location_id: Optional[int]
@@ -16,7 +16,7 @@ class DeviceCreate(BaseModel):
 class DeviceOut(BaseModel):
     id: int
     ip: str
-    status: str  # CAMBIO
+    status: str
     description: str
     protocol: str
     location_id: Optional[int]
@@ -26,12 +26,12 @@ class DeviceOut(BaseModel):
         from_attributes = True
 
 class DeviceUpdate(BaseModel):
-    ip: Optional[str]
-    status: Optional[str]
-    description: Optional[str]
-    protocol: Optional[str]
-    location_id: Optional[int]
-    ports: Optional[List[PortCreate]]
+    ip: Optional[str] = None
+    status: Optional[str] = None
+    description: Optional[str] = None
+    protocol: Optional[str] = None
+    location_id: Optional[int] = None
+    ports: Optional[List[PortCreate]] = None
 
     class Config:
         from_attributes = True
