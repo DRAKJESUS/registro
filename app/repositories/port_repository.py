@@ -1,17 +1,18 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
-from typing import List
+from typing import List, Union
 import logging
 from ..models.port_model import Port
-from ..schemas.port_schema import PortCreate
+from ..schemas.port_schema import PortCreate, PortSchema
 
 logger = logging.getLogger(__name__)
 
 class PortRepository:
     @staticmethod
-    async def replace_ports(db: AsyncSession, device_id: int, new_ports: List[PortCreate]):
+    async def replace_ports(db: AsyncSession, device_id: int, new_ports: List[Union[PortCreate, dict]]):
         """
         Reemplaza todos los puertos de un dispositivo de manera segura
+        Acepta tanto objetos PortCreate como diccionarios
         """
         try:
             # 1. Obtener puertos existentes
@@ -24,17 +25,20 @@ class PortRepository:
             for port in existing_ports:
                 await db.delete(port)
             
-            # Commit intermedio para limpiar la sesión
             await db.commit()
             
             # 3. Crear nuevos puertos
             created_ports = []
             for port_data in new_ports:
+                # Convertir diccionario a objeto PortCreate si es necesario
+                if isinstance(port_data, dict):
+                    port_data = PortCreate(**port_data)
+                
                 new_port = Port(
                     device_id=device_id,
                     port_number=port_data.port_number,
                     description=port_data.description,
-                    protocol=port_data.protocol if hasattr(port_data, 'protocol') else None
+                    protocol=getattr(port_data, 'protocol', None)
                 )
                 db.add(new_port)
                 created_ports.append(new_port)
