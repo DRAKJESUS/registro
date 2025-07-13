@@ -7,7 +7,7 @@ class Device(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     ip = Column(String, unique=True, index=True)
-    status = Column(String)  # CAMBIO: antes era 'type'
+    status = Column(String)  # Ejemplo: "activo", "inactivo"
     description = Column(String)
     protocol = Column(String)
     location_id = Column(Integer, ForeignKey("locations.id"), nullable=True)
@@ -18,4 +18,16 @@ class Device(Base):
         cascade="all, delete-orphan",
         lazy="selectin"
     )
-    location = relationship("Location", back_populates="devices", lazy="joined")
+
+    location = relationship(
+        "Location",
+        back_populates="devices",
+        lazy="joined"
+    )
+
+    history = relationship(
+        "AssignmentHistory",
+        back_populates="device",
+        lazy="selectin",
+        cascade="all, delete-orphan"
+    )
