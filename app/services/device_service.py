@@ -89,7 +89,10 @@ class DeviceService:
                 if field in data:
                     setattr(device, field, data[field])
 
-            # Si vienen puertos, reemplazarlos
+            db.add(device)
+            await db.flush()  # Asegura que el dispositivo esté registrado antes de modificar puertos
+
+            # Reemplazar puertos si se mandan
             if "ports" in data:
                 await PortRepository.replace_ports(db, device.id, data["ports"])
 
@@ -110,12 +113,12 @@ class DeviceService:
                 )
                 db.add(history)
 
-            db.add(device)
             await db.commit()
             await db.refresh(device)
 
             logger.info(f"Dispositivo actualizado: {device_id}")
             return device
+
         except ValueError as ve:
             await db.rollback()
             logger.warning(f"Validación fallida: {ve}")

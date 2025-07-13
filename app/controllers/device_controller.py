@@ -56,3 +56,4 @@ async def update_device(device_id: int, device: DeviceUpdate, db: AsyncSession =
         return await DeviceService.update_device(db, device_id, device)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+

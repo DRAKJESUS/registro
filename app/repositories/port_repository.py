@@ -1,6 +1,6 @@
-from typing import List, Union, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from typing import List, Union, Dict, Any
 import logging
 
 from ..models.port_model import Port
@@ -16,19 +16,19 @@ class PortRepository:
         new_ports: List[Union[PortCreate, Dict[str, Any]]]
     ) -> List[Port]:
         try:
-            # 1. Obtener puertos actuales
+            # Leer puertos actuales
             result = await db.execute(
                 select(Port).where(Port.device_id == device_id)
             )
             existing_ports = result.scalars().all()
 
-            # 2. Eliminar puertos existentes
+            # Eliminar puertos existentes
             for port in existing_ports:
                 await db.delete(port)
 
-            await db.commit()  # commit tras el delete
+            await db.flush()  # Se asegura de que no haya conflictos antes del commit
 
-            # 3. Crear nuevos puertos
+            # Crear nuevos puertos
             created_ports = []
             for port_data in new_ports:
                 if isinstance(port_data, dict):
@@ -42,9 +42,7 @@ class PortRepository:
                 db.add(new_port)
                 created_ports.append(new_port)
 
-            await db.commit()
-
-            # 4. Refrescar solo los nuevos puertos
+            await db.flush()
             for port in created_ports:
                 await db.refresh(port)
 
