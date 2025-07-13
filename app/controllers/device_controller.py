@@ -10,75 +10,48 @@ router = APIRouter(prefix="/devices", tags=["Dispositivos"])
 
 @router.post("/", response_model=DeviceOut, status_code=status.HTTP_201_CREATED)
 async def create_device(device: DeviceCreate, db: AsyncSession = Depends(get_session)):
-    """
-    Crea un nuevo dispositivo con IP, tipo, descripción, protocolo, puertos y localización (opcional).
-    """
     try:
         return await DeviceService.create_device(db, device)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.get("/", response_model=List[DeviceOut])
 async def list_devices(db: AsyncSession = Depends(get_session)):
-    """
-    Lista todos los dispositivos registrados con sus puertos y localización.
-    """
     try:
         return await DeviceService.get_all_devices(db)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.delete("/{device_id}")
 async def delete_device(device_id: int, db: AsyncSession = Depends(get_session)):
-    """
-    Elimina un dispositivo por su ID.
-    """
     try:
         return await DeviceService.delete_device(db, device_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.post("/{device_id}/assign/{location_id}")
 async def assign_device(device_id: int, location_id: int, db: AsyncSession = Depends(get_session)):
-    """
-    Asigna un dispositivo a una localización.
-    """
     try:
         return await DeviceService.assign_location(db, device_id, location_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.post("/{device_id}/change/{location_id}")
 async def change_device_location(device_id: int, location_id: int, db: AsyncSession = Depends(get_session)):
-    """
-    Cambia la localización de un dispositivo.
-    """
     try:
         return await DeviceService.change_location(db, device_id, location_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
-@router.put("/{device_id}/status")
+@router.put("/{device_id}/status", response_model=DeviceOut)
 async def update_device_status(device_id: int, status: str, db: AsyncSession = Depends(get_session)):
-    """
-    Cambia el status del dispositivo y guarda el cambio en historial.
-    """
     try:
         return await DeviceService.change_status(db, device_id, status)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @router.put("/{device_id}", response_model=DeviceOut)
 async def update_device(device_id: int, device: DeviceUpdate, db: AsyncSession = Depends(get_session)):
-    """
-    Actualiza todos los datos de un dispositivo, incluyendo IP, status, protocolo, descripción, localización y puertos.
-    """
     try:
         return await DeviceService.update_device(db, device_id, device)
     except Exception as e:
