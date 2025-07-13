@@ -1,15 +1,14 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, Extra
 
 class PortCreate(BaseModel):
     port_number: int
     description: str
 
     class Config:
-        from_attributes = True  # compatibilidad con modelos ORM
+        extra = Extra.forbid  # ❌ Prohíbe campos no declarados
 
 class PortOut(PortCreate):
     id: int
 
     class Config:
-        from_attributes = True
+        orm_mode = True
