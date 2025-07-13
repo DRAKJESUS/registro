@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy import select
 from ..models.location_model import Location
 from ..schemas.location_schema import LocationCreate
 
