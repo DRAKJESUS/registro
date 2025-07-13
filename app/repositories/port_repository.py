@@ -1,6 +1,8 @@
 from sqlalchemy import delete
 from ..models.port_model import Port
 from ..schemas.port_schema import PortCreate
+from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class PortRepository:
     @staticmethod
