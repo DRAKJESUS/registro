@@ -8,7 +8,8 @@ import logging
 from ..models.device_model import Device
 from ..models.assignment_model import AssignmentHistory
 from ..schemas.device_schema import DeviceCreate, DeviceUpdate
-from .port_repository import PortRepository
+from ..repositories.port_repository import PortRepository
+
 
 logger = logging.getLogger(__name__)
 
