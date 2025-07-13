@@ -49,8 +49,7 @@ class PortRepository:
                 new_port = Port(
                     device_id=device_id,
                     port_number=port_data.port_number,
-                    description=port_data.description,
-                    protocol=getattr(port_data, "protocol", None)
+                    description=port_data.description
                 )
                 db.add(new_port)
                 created_ports.append(new_port)
