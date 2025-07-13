@@ -1,7 +1,6 @@
 from typing import Union, Dict, List, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import make_transient
 from sqlalchemy import select
 import logging
 
@@ -9,7 +8,6 @@ from ..models.device_model import Device
 from ..models.assignment_model import AssignmentHistory
 from ..schemas.device_schema import DeviceCreate, DeviceUpdate
 from ..repositories.port_repository import PortRepository
-
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +26,11 @@ class DeviceService:
             await db.commit()
             await db.refresh(device)
 
-            # Si hay puertos, crear y asociarlos
+            # Si hay puertos, agregarlos
             if device_data.ports:
                 await PortRepository.replace_ports(db, device.id, device_data.ports)
 
+            logger.info(f"Dispositivo creado: {device.id}")
             return device
         except Exception as e:
             await db.rollback()
@@ -66,6 +65,7 @@ class DeviceService:
                 return {"error": "Dispositivo no encontrado"}
             await db.delete(device)
             await db.commit()
+            logger.info(f"Dispositivo eliminado: {device_id}")
             return {"mensaje": "Dispositivo eliminado correctamente"}
         except Exception as e:
             await db.rollback()
@@ -84,32 +84,47 @@ class DeviceService:
             old_status = device.status
             old_location = device.location_id
 
+            # Actualiza campos simples
             for field in ["ip", "status", "description", "protocol", "location_id"]:
                 if field in data:
                     setattr(device, field, data[field])
 
+            # Si vienen puertos, reemplazarlos
             if "ports" in data:
                 await PortRepository.replace_ports(db, device.id, data["ports"])
 
-            # Registrar historial si hubo cambio
-            if ("status" in data and data["status"] != old_status) or \
-               ("location_id" in data and data["location_id"] != old_location):
+            # Guardar historial si hubo cambios
+            history_fields = {}
+            if "status" in data and data["status"] != old_status:
+                history_fields["old_status"] = old_status
+                history_fields["new_status"] = device.status
+            if "location_id" in data and data["location_id"] != old_location:
+                history_fields["old_location_id"] = old_location
+                history_fields["new_location_id"] = device.location_id
+
+            if history_fields:
                 history = AssignmentHistory(
                     device_id=device.id,
                     action="ACTUALIZACIÓN DE DISPOSITIVO",
-                    old_status=old_status,
-                    new_status=device.status,
-                    old_location_id=old_location,
-                    new_location_id=device.location_id
+                    **history_fields
                 )
                 db.add(history)
 
             db.add(device)
             await db.commit()
             await db.refresh(device)
-            return device
 
+            logger.info(f"Dispositivo actualizado: {device_id}")
+            return device
+        except ValueError as ve:
+            await db.rollback()
+            logger.warning(f"Validación fallida: {ve}")
+            raise
+        except SQLAlchemyError as sae:
+            await db.rollback()
+            logger.error(f"Error en base de datos al actualizar dispositivo: {sae}")
+            raise
         except Exception as e:
             await db.rollback()
-            logger.error(f"Error al actualizar dispositivo {device_id}: {e}")
+            logger.error(f"Error inesperado al actualizar dispositivo {device_id}: {e}")
             raise
