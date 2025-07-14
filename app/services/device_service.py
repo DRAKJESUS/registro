@@ -2,6 +2,7 @@ from typing import Union, Dict, List, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 import logging
 
 from ..models.device_model import Device
@@ -26,9 +27,17 @@ class DeviceService:
             await db.commit()
             await db.refresh(device)
 
-            # Si hay puertos, agregarlos
             if device_data.ports:
                 await PortRepository.replace_ports(db, device.id, device_data.ports)
+
+            # 🔄 Recarga con relaciones (puertos y localización)
+            result = await db.execute(
+                select(Device).where(Device.id == device.id).options(
+                    selectinload(Device.ports),
+                    selectinload(Device.location)
+                )
+            )
+            device = result.scalar_one()
 
             logger.info(f"Dispositivo creado: {device.id}")
             return device
@@ -40,7 +49,12 @@ class DeviceService:
     @staticmethod
     async def get_all_devices(db: AsyncSession) -> List[Device]:
         try:
-            result = await db.execute(select(Device))
+            result = await db.execute(
+                select(Device).options(
+                    selectinload(Device.ports),
+                    selectinload(Device.location)
+                )
+            )
             return result.scalars().all()
         except Exception as e:
             logger.error(f"Error al obtener dispositivos: {e}")
@@ -49,10 +63,13 @@ class DeviceService:
     @staticmethod
     async def get_device(db: AsyncSession, device_id: int) -> Union[Device, None]:
         try:
-            device = await db.get(Device, device_id)
-            if device:
-                await db.refresh(device)
-            return device
+            result = await db.execute(
+                select(Device).where(Device.id == device_id).options(
+                    selectinload(Device.ports),
+                    selectinload(Device.location)
+                )
+            )
+            return result.scalar_one_or_none()
         except Exception as e:
             logger.error(f"Error al obtener dispositivo {device_id}: {e}")
             raise
@@ -84,19 +101,16 @@ class DeviceService:
             old_status = device.status
             old_location = device.location_id
 
-            # Actualiza campos simples
             for field in ["ip", "status", "description", "protocol", "location_id"]:
                 if field in data:
                     setattr(device, field, data[field])
 
             db.add(device)
-            await db.flush()  # Asegura que el dispositivo esté registrado antes de modificar puertos
+            await db.flush()
 
-            # Reemplazar puertos si se mandan
             if "ports" in data:
                 await PortRepository.replace_ports(db, device.id, data["ports"])
 
-            # Guardar historial si hubo cambios
             history_fields = {}
             if "status" in data and data["status"] != old_status:
                 history_fields["old_status"] = old_status
@@ -115,6 +129,15 @@ class DeviceService:
 
             await db.commit()
             await db.refresh(device)
+
+            # 🔄 Recarga con relaciones (puertos y localización)
+            result = await db.execute(
+                select(Device).where(Device.id == device.id).options(
+                    selectinload(Device.ports),
+                    selectinload(Device.location)
+                )
+            )
+            device = result.scalar_one()
 
             logger.info(f"Dispositivo actualizado: {device_id}")
             return device
@@ -229,10 +252,13 @@ class DeviceService:
     @staticmethod
     async def get(db: AsyncSession, device_id: int) -> Device:
         try:
-            device = await db.get(Device, device_id)
-            if device:
-                await db.refresh(device)
-            return device
+            result = await db.execute(
+                select(Device).where(Device.id == device_id).options(
+                    selectinload(Device.ports),
+                    selectinload(Device.location)
+                )
+            )
+            return result.scalar_one_or_none()
         except Exception as e:
             logger.error(f"Error al obtener dispositivo {device_id}: {e}")
             raise
