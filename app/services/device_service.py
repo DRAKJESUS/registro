@@ -225,3 +225,14 @@ class DeviceService:
             await db.rollback()
             logger.error(f"Error al cambiar localización del dispositivo {device_id}: {e}")
             raise
+
+    @staticmethod
+    async def get(db: AsyncSession, device_id: int) -> Device:
+        try:
+            device = await db.get(Device, device_id)
+            if device:
+                await db.refresh(device)
+            return device
+        except Exception as e:
+            logger.error(f"Error al obtener dispositivo {device_id}: {e}")
+            raise

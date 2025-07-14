@@ -57,3 +57,15 @@ async def update_device(device_id: int, device: DeviceUpdate, db: AsyncSession =
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/{device_id}", response_model=DeviceOut)
+async def get_device(device_id: int, db: AsyncSession = Depends(get_session)):
+    """
+    Obtiene un dispositivo por su ID.
+    """
+    try:
+        device = await DeviceService.get(db, device_id)
+        if not device:
+            raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+        return device
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
