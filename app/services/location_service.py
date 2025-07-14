@@ -1,8 +1,8 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from ..models.location_model import Location
+from ..models.location_history_model import LocationHistory  # ✅ Nuevo modelo de historial
 from ..schemas.location_schema import LocationCreate
-from ..models.assignment_model import AssignmentHistory  # Para guardar historial
 
 class LocationService:
     @staticmethod
@@ -48,26 +48,22 @@ class LocationService:
         if existing.scalar():
             raise ValueError("Ya existe otra localización con ese nombre")
 
-        cambios = []
-        if location_obj.name != location.name:
-            cambios.append("nombre")
-        if location_obj.description != location.description:
-            cambios.append("descripción")
+        # Guardar historial si hay cambios
+        if location_obj.name != location.name or location_obj.description != location.description:
+            history = LocationHistory(
+                location_id=location_obj.id,
+                action="EDICIÓN DE LOCALIZACIÓN",
+                old_name=location_obj.name,
+                new_name=location.name,
+                old_description=location_obj.description,
+                new_description=location.description
+            )
+            db.add(history)
 
+        # Actualiza datos
         location_obj.name = location.name
         location_obj.description = location.description
         db.add(location_obj)
-
-        if cambios:
-            history = AssignmentHistory(
-                device_id=0,  # Si no hay dispositivo relacionado, puedes usar None si lo permites
-                action=f"EDICIÓN DE LOCALIZACIÓN ({', '.join(cambios).upper()})",
-                old_status=None,
-                new_status=None,
-                old_location_id=location_id,
-                new_location_id=location_id
-            )
-            db.add(history)
 
         await db.commit()
         await db.refresh(location_obj)
