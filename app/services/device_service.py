@@ -24,13 +24,15 @@ class DeviceService:
                 location_id=device_data.location_id
             )
             db.add(device)
-            await db.commit()
+            await db.flush()
             await db.refresh(device)
 
             if device_data.ports:
                 await PortRepository.replace_ports(db, device.id, device_data.ports)
 
-            # ✅ Corrección: recargar relaciones (puertos y localización) después de insertarlos
+            await db.commit()
+
+            # Recargar relaciones (puertos y localización)
             result = await db.execute(
                 select(Device).where(Device.id == device.id).options(
                     selectinload(Device.ports),
