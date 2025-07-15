@@ -30,7 +30,7 @@ class DeviceService:
             if device_data.ports:
                 await PortRepository.replace_ports(db, device.id, device_data.ports)
 
-            # 🔄 Recarga con relaciones (puertos y localización)
+            # ✅ Corrección: recargar relaciones (puertos y localización) después de insertarlos
             result = await db.execute(
                 select(Device).where(Device.id == device.id).options(
                     selectinload(Device.ports),
@@ -130,7 +130,6 @@ class DeviceService:
             await db.commit()
             await db.refresh(device)
 
-            # 🔄 Recarga con relaciones (puertos y localización)
             result = await db.execute(
                 select(Device).where(Device.id == device.id).options(
                     selectinload(Device.ports),
@@ -168,7 +167,6 @@ class DeviceService:
 
             device.status = new_status
 
-            # Guardar en historial
             history = AssignmentHistory(
                 device_id=device.id,
                 action="CAMBIO DE STATUS",
