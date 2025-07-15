@@ -24,13 +24,13 @@ class DeviceService:
                 location_id=device_data.location_id
             )
             db.add(device)
-            await db.flush()
-            await db.refresh(device)
+            await db.flush()  # Necesario para que se genere el ID
 
             if device_data.ports:
                 await PortRepository.replace_ports(db, device.id, device_data.ports)
 
             await db.commit()
+            await db.refresh(device)
 
             # Recargar relaciones (puertos y localización)
             result = await db.execute(
