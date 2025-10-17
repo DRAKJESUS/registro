@@ -26,7 +26,7 @@ class PortRepository:
             for port in existing_ports:
                 await db.delete(port)
 
-            await db.flush()  # Se asegura de que no haya conflictos antes del commit
+            await db.flush() 
 
             # Crear nuevos puertos
             created_ports = []
