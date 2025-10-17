@@ -33,7 +33,7 @@ y llevar un historial completo de cambios y asignaciones.
 # Middleware CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Cambia esto si vas a producción
+    allow_origins=["*"],  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
