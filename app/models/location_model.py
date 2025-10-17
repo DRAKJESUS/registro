@@ -17,7 +17,7 @@ class Location(Base):
         lazy="selectin"
     )
 
-    # Relación opcional con el historial (si quieres acceder desde aquí)
+  
     assignment_history_old = relationship(
         "AssignmentHistory",
         foreign_keys="AssignmentHistory.old_location_id",
